@@ -1,0 +1,63 @@
+name: WooCommerce Sync Coordinator
+
+on:
+  # Run on issues
+  issues:
+    types: [opened, edited, labeled]
+  issue_comment:
+    types: [created]
+  
+  # Run on schedule - every 20 minutes
+  schedule:
+    - cron: '*/20 * * * *'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: false
+        default: 'process'
+        type: choice
+        options:
+          - process
+          - check_jobs
+          - sync_status
+
+jobs:
+  sync-coordinator:
+    runs-on: ubuntu-latest
+    name: E-Commerce Integration Management
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        pip install PyGithub
+        pip install python-dotenv
+    
+    - name: Run WooCommerce Sync Coordinator
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        CROSS_REPO_TOKEN: ${{ secrets.CROSS_REPO_TOKEN || secrets.GITHUB_TOKEN }}
+      run: |
+        echo "🛒 Starting WooCommerce Sync Coordinator..."
+        echo "Mission: Manage e-commerce integration and synchronization"
+        python agents/woocommerce_sync_coordinator.py
+        echo "✅ E-commerce coordination complete"
+    
+    - name: Check Job Queue Status (if requested)
+      if: github.event.inputs.action == 'check_jobs' || github.event.inputs.action == 'sync_status'
+      run: |
+        echo "📊 JOB QUEUE STATUS CHECK"
+        echo "This would connect to Odoo and check job queue status"
+        echo "- Pending jobs"
+        echo "- Failed jobs requiring attention"
+        echo "- Sync performance metrics"
